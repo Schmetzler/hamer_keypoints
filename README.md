@@ -17,7 +17,7 @@ img = cv2.imread("img.png")
 
 # keypoints is a dictionary with keys "Right" and "Left" if present
 # the image should be in Opencvs BGR color format
-keypoints = hamer.process(keypoints)
+keypoints = hamer.process(img)
 
 # you can also use the other outputs of the hamer algorithm, they are stored in the class object
 res = hamer.result
