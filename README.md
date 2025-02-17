@@ -1,3 +1,31 @@
+## Stripped Down version of HaMeR
+
+I needed a version that can detect handshapes properly, as I used mediapipe but it didn't suit my needs. So I searched something else and found HaMeR ... I don't need multiple person detection nor the fancy handshape rendering. Only thing i need are the MANO joints. So I decided to strip down the whole thing and remove the unneeded stuff. For Hand detection I still use Mediapipe and afterwards let HaMeR detect the more precise keypoints. My initial tests seemed very promising so I try to make a smaller package out of it. Thanks also to the amazing docker image provided by https://github.com/chaitanya1chawla/hamer.git which allowed me to test the framework and decide what is possible to remove. I also removed the dependencies to the detectron2 framework as well VitPose stuff (as I just need inference)
+
+You can use this module after installation, but be aware you need the chkpt somewhere... Therefore you should edit `CACHE_DIR_HAMER = "/datasets/HAMER/_DATA"` in `hamer/configs/__init__.py` to the location where the ckpt file is.
+
+I also included the `hand_landmarker.task` from mediapipe.
+
+To use it as a module:
+```python
+from hamer.hamer_module import HAMER
+import cv2
+
+# possible modes are "VIDEO" and "IMAGE" and device can be "cpu" or depending on your torch installation "cuda" or something else
+hamer = HAMER(mode="IMAGE", device="cpu")
+img = cv2.imread("img.png")
+
+# keypoints is a dictionary with keys "Right" and "Left" if present
+# the image should be in Opencvs BGR color format
+keypoints = hamer.process(keypoints)
+
+# you can also use the other outputs of the hamer algorithm, they are stored in the class object
+res = hamer.result
+# look at the code of hamer/models/hamer.py --> forward_step to check the possible dictionary keys
+```
+
+Now the original README:
+
 # HaMeR: Hand Mesh Recovery
 Code repository for the paper:
 **Reconstructing Hands in 3D with Transformers**

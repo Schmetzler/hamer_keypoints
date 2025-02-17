@@ -488,7 +488,7 @@ def mano_param_processing(mano_params: Dict, has_mano_params: Dict, rot: float, 
 
 
 
-def get_example(img_path: str|np.ndarray, center_x: float, center_y: float,
+def get_example(img_path, center_x: float, center_y: float,
                 width: float, height: float,
                 keypoints_2d: np.array, keypoints_3d: np.array,
                 mano_params: Dict, has_mano_params: Dict,

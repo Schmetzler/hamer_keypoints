@@ -2,7 +2,7 @@ import os
 from typing import Dict
 from yacs.config import CfgNode as CN
 
-CACHE_DIR_HAMER = "./_DATA"
+CACHE_DIR_HAMER = "/datasets/HAMER/_DATA"
 
 def to_lower(x: Dict) -> Dict:
     """
