@@ -1,9 +1,11 @@
 from setuptools import setup, find_packages
 
-print('Found packages:', find_packages())
+version = "0.1.0"
+
 setup(
     description='HaMeR as a package',
     name='hamer',
+    version=version,
     packages=find_packages(),
     package_data={"hamer": ["*.task"]},
     install_requires=[
