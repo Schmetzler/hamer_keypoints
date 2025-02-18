@@ -1,13 +1,17 @@
 ## Stripped Down version of HaMeR
 
-I needed a version that can detect handshapes properly, as I used mediapipe but it didn't suit my needs. So I searched something else and found HaMeR ... I don't need multiple person detection nor the fancy handshape rendering. Only thing i need are the MANO joints. So I decided to strip down the whole thing and remove the unneeded stuff. For Hand detection I still use Mediapipe and afterwards let HaMeR detect the more precise keypoints. My initial tests seemed very promising so I try to make a smaller package out of it. Thanks also to the amazing docker image provided by https://github.com/chaitanya1chawla/hamer.git which allowed me to test the framework and decide what is possible to remove. I also removed the dependencies to the detectron2 framework as well VitPose stuff (as I just need inference)
+I needed a version that can detect handshapes properly, as I used [Mediapipe](https://ai.google.dev/edge/mediapipe/solutions/guide) but it didn't suit my needs. So I searched something else and found [HaMeR](https://github.com/geopavlakos/hamer.git) ... I don't need multiple person detection nor the fancy handshape rendering. Only thing i need are the MANO joints. So I decided to strip down the whole thing and remove the unneeded stuff. For Hand detection I still use Mediapipe and afterwards let HaMeR detect the more precise keypoints. My initial tests seemed very promising so I try to make a smaller package out of it. Thanks also to the amazing docker image provided by https://github.com/chaitanya1chawla/hamer.git which allowed me to test the framework and decide what is possible to remove. I also removed the dependencies to the detectron2 framework as well VitPose stuff (as I just need hand inference).
 
-You can use this module after installation, but be aware you need the chkpt somewhere... Therefore you should edit `CACHE_DIR_HAMER = "/datasets/HAMER/_DATA"` in `hamer/configs/__init__.py` to the location where the ckpt file is.
+You can use this module after installation, but be aware you need the checkpoint somewhere... Therefore you should edit `CACHE_DIR_HAMER = "./hamer_ckpt/_DATA"` in `hamer/configs/__init__.py` to the location where the ckpt file is. I created a repository with the checkpoint file [here](https://github.com/Schmetzler/hamer_ckpt.git). It uses git-lfs because the checkpoint file is really large and I also had to split it into 2 files so you have to unpack it after cloning the repo (see README.md of the repo). You should also download the mano files from https://mano.is.tue.mpg.de/ and put it into `CACHE_DIR_HAMER/data/`
 
-I also included the `hand_landmarker.task` from mediapipe.
+I also included the [hand_landmarker.task](https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task) from Mediapipe.
 
 To use it as a module:
 ```python
+# to change the CACHE_DIR_HAMER variable import configs first
+import hamer.configs
+hamer.configs.CACHE_DIR_HAMER = "./hamer_ckpt/_DATA"
+
 from hamer.hamer_module import HAMER
 import cv2
 
@@ -16,7 +20,7 @@ hamer = HAMER(mode="IMAGE", device="cpu")
 img = cv2.imread("img.png")
 
 # keypoints is a dictionary with keys "Right" and "Left" if present
-# the image should be in Opencvs BGR color format
+# the image should be in OpenCVs BGR color format
 keypoints = hamer.process(img)
 
 # you can also use the other outputs of the hamer algorithm, they are stored in the class object
