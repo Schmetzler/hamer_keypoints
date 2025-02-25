@@ -16,26 +16,31 @@ from contextlib import ExitStack
 import atexit
 file_manager = ExitStack()
 atexit.register(file_manager.close)
-ref = files('hamer') / 'hand_landmarker.task'
-path = file_manager.enter_context(as_file(ref)).as_posix()
+ref_hand = files('hamer') / 'hand_landmarker.task'
+ref_pose = files('hamer') / 'pose_landmarker_lite.task'
+hand_path = file_manager.enter_context(as_file(ref_hand)).as_posix()
+pose_path = file_manager.enter_context(as_file(ref_pose)).as_posix()
 
 class HAMER():
-    def __init__(self, mode="IMAGE", device="cpu", chkpt_path=DEFAULT_CHECKPOINT, hand_det_task_path=path):
+    def __init__(self, mode="IMAGE", device="cpu", chkpt_path=DEFAULT_CHECKPOINT, task_paths={"hand": hand_path, "pose": pose_path}):
         self.model, self.model_cfg = load_hamer(chkpt_path)
         
         self.device = torch.device(device)
         self.hamer = self.model.to(self.device)
         self.hamer.eval()
         
-        self.hand_det = HandDetector(taskfile=hand_det_task_path, mode=mode)
+        self.hand_det = HandDetector(taskfiles=task_paths, mode=mode)
         self.result = None
         self.__frameNr = 0
         
-    def process(self, cv_img, rescale_factor=2.0):
+    def process(self, cv_img, rescale_factor=2.0, bbox_only=False):
         bboxes = []
         is_right = []
         
         _bboxes = self.hand_det.detect_bboxes(cv_img)
+        
+        if bbox_only:
+            return {}, _bboxes
 
         # Use hands based on hand keypoint detections
         for name, bbox in _bboxes.items():
@@ -44,7 +49,7 @@ class HAMER():
                 is_right.append(1 if name == "Right" else 0)
             
         if len(bboxes) == 0:
-            return {}
+            return {}, {}
         
         boxes = np.stack(bboxes)
         right = np.stack(is_right)
@@ -66,4 +71,4 @@ class HAMER():
                 else:
                     result["Left"] = kp3d
             self.result = out
-        return result
+        return result, _bboxes
