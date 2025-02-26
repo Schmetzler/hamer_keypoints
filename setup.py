@@ -11,7 +11,6 @@ setup(
     install_requires=[
         'numpy',
         'opencv-python',
-        'lightning',
         'scikit-image',
         'smplx==0.1.28',
         'torch',
@@ -20,5 +19,6 @@ setup(
         'mediapipe',
         'chumpy @ git+https://github.com/nico-von-huene/chumpy.git',
         'einops',
+        'safetensorts',
     ],
 )

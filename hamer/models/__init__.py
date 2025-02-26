@@ -1,6 +1,5 @@
 from .mano_wrapper import MANO
 from .hamer import HAMER
-from .discriminator import Discriminator
 
 from ..utils.download import cache_url
 from ..configs import CACHE_DIR_HAMER
@@ -48,5 +47,5 @@ def load_hamer(checkpoint_path=DEFAULT_CHECKPOINT):
         model_cfg.MODEL.BACKBONE.pop('PRETRAINED_WEIGHTS')
         model_cfg.freeze()
 
-    model = HAMER.load_from_checkpoint(checkpoint_path, strict=False, cfg=model_cfg)
+    model = HAMER.load_from_checkpoint(checkpoint_path, cfg=model_cfg, strict=False)
     return model, model_cfg
