@@ -19,6 +19,6 @@ setup(
         'mediapipe',
         'chumpy @ git+https://github.com/nico-von-huene/chumpy.git',
         'einops',
-        'safetensorts',
+        'safetensors',
     ],
 )
