@@ -96,18 +96,31 @@ class HAMER(torch.nn.Module):
         output['pred_keypoints_2d'] = pred_keypoints_2d.reshape(batch_size, -1, 2)
         return output
 
+    @classmethod
     def load_from_checkpoint(cls, checkpoint_path, cfg, map_location=None, strict=None):
         checkpoint = {}
-        weights_only = True
         if checkpoint_path.endswith("safetensors"):
             with safe_open(checkpoint_path, framework="pt", device=map_location) as f:
                 for key in f.keys():
                     checkpoint[key] = f.get_tensor(key)
         else:
-            fs, _ = fsspec.core.url_to_fs(checkpoint_path)
-            with fs.open(checkpoint_path, "rb") as of:
-                checkpoint = torch.load(of, map_location=map_location, weights_only=weights_only)
+            try:
+                checkpoint = torch.load(checkpoint_path, map_location=map_location, weights_only=True)
+            except Exception:
+                print("Cannot load weights only... load again.")
+                checkpoint = torch.load(checkpoint_path, map_location=map_location, weights_only=False)
+                if "state_dict" in checkpoint:
+                    checkpoint = checkpoint["state_dict"]
+        
+        if strict:
+            # remove the discriminator if present
+            to_rem = []
+            for key in checkpoint:
+                if key.startswith("discriminator"):
+                    to_rem.append(key)
+            for key in to_rem:
+                del checkpoint[key]
 
         model = cls(cfg)
         model.load_state_dict(checkpoint, strict=strict)
-        return model
+        return model.to(map_location)

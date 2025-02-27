@@ -28,7 +28,7 @@ def download_models(folder=CACHE_DIR_HAMER):
                 os.system("tar -xvf " + output_path)
 
 DEFAULT_CHECKPOINT=f'{CACHE_DIR_HAMER}/hamer_ckpts/checkpoints/hamer.ckpt'
-def load_hamer(checkpoint_path=DEFAULT_CHECKPOINT):
+def load_hamer(checkpoint_path=DEFAULT_CHECKPOINT, strict=False, map_location=None):
     from pathlib import Path
     from ..configs import get_config
     model_cfg = str(Path(checkpoint_path).parent.parent / 'model_config.yaml')
@@ -47,5 +47,5 @@ def load_hamer(checkpoint_path=DEFAULT_CHECKPOINT):
         model_cfg.MODEL.BACKBONE.pop('PRETRAINED_WEIGHTS')
         model_cfg.freeze()
 
-    model = HAMER.load_from_checkpoint(checkpoint_path, cfg=model_cfg, strict=False)
+    model = HAMER.load_from_checkpoint(checkpoint_path, cfg=model_cfg, strict=strict, map_location=map_location)
     return model, model_cfg

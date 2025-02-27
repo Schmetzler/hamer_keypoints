@@ -23,10 +23,8 @@ pose_path = file_manager.enter_context(as_file(ref_pose)).as_posix()
 
 class HAMER():
     def __init__(self, mode="IMAGE", device="cpu", chkpt_path=DEFAULT_CHECKPOINT, task_paths={"hand": hand_path, "pose": pose_path}):
-        self.model, self.model_cfg = load_hamer(chkpt_path)
-        
         self.device = torch.device(device)
-        self.hamer = self.model.to(self.device)
+        self.hamer, self.model_cfg = load_hamer(chkpt_path, map_location=self.device)
         self.hamer.eval()
         
         self.hand_det = HandDetector(taskfiles=task_paths, mode=mode)
