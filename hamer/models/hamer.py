@@ -1,7 +1,6 @@
 import torch
 from typing import Any, Dict, Mapping, Tuple
-import fsspec
-from safetensors import safe_open
+from safetensors.torch import load_model
 
 from yacs.config import CfgNode
 
@@ -98,8 +97,9 @@ class HAMER(torch.nn.Module):
 
     @classmethod
     def load_from_checkpoint(cls, checkpoint_path, cfg, map_location=None, strict=None):
-        checkpoint = {}
-        if checkpoint_path.endswith("safetensors"):
+        model = cls(cfg)
+
+        if checkpoint_path.endswith(".safetensors"):
             if map_location and isinstance(map_location, torch.device):
                 if not map_location.index is None:
                     device = map_location.index
@@ -107,10 +107,7 @@ class HAMER(torch.nn.Module):
                     device = map_location.type
             else:
                 device = map_location
-                    
-            with safe_open(checkpoint_path, framework="pt", device=device) as f:
-                for key in f.keys():
-                    checkpoint[key] = f.get_tensor(key)
+            load_model(model, checkpoint_path, strict=strict, device=device)
         else:
             try:
                 checkpoint = torch.load(checkpoint_path, map_location=map_location, weights_only=True)
@@ -120,15 +117,13 @@ class HAMER(torch.nn.Module):
                 if "state_dict" in checkpoint:
                     checkpoint = checkpoint["state_dict"]
         
-        if strict:
-            # remove the discriminator if present
-            to_rem = []
-            for key in checkpoint:
-                if key.startswith("discriminator"):
-                    to_rem.append(key)
-            for key in to_rem:
-                del checkpoint[key]
-
-        model = cls(cfg)
-        model.load_state_dict(checkpoint, strict=strict)
+            if strict:
+                # remove the discriminator if present
+                to_rem = []
+                for key in checkpoint:
+                    if key.startswith("discriminator"):
+                        to_rem.append(key)
+                for key in to_rem:
+                    del checkpoint[key]
+            model.load_state_dict(checkpoint, strict=strict)
         return model.to(map_location)
