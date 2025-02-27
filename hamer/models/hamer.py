@@ -100,7 +100,15 @@ class HAMER(torch.nn.Module):
     def load_from_checkpoint(cls, checkpoint_path, cfg, map_location=None, strict=None):
         checkpoint = {}
         if checkpoint_path.endswith("safetensors"):
-            with safe_open(checkpoint_path, framework="pt", device=map_location) as f:
+            if map_location and isinstance(map_location, torch.device):
+                if not map_location.index is None:
+                    device = map_location.index
+                else:
+                    device = map_location.type
+            else:
+                device = map_location
+                    
+            with safe_open(checkpoint_path, framework="pt", device=device) as f:
                 for key in f.keys():
                     checkpoint[key] = f.get_tensor(key)
         else:

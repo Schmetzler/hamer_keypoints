@@ -2,8 +2,8 @@ from .mano_wrapper import MANO
 from .hamer import HAMER
 
 from ..utils.download import cache_url
-from ..configs import CACHE_DIR_HAMER
-
+from ..configs import CACHE_DIR_HAMER, get_config
+from pathlib import Path
 
 def download_models(folder=CACHE_DIR_HAMER):
     """Download checkpoints and files for running inference.
@@ -29,8 +29,7 @@ def download_models(folder=CACHE_DIR_HAMER):
 
 DEFAULT_CHECKPOINT=f'{CACHE_DIR_HAMER}/hamer_ckpts/checkpoints/hamer.ckpt'
 def load_hamer(checkpoint_path=DEFAULT_CHECKPOINT, strict=False, map_location=None):
-    from pathlib import Path
-    from ..configs import get_config
+
     model_cfg = str(Path(checkpoint_path).parent.parent / 'model_config.yaml')
     model_cfg = get_config(model_cfg, update_cachedir=True)
 
