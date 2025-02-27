@@ -97,10 +97,16 @@ class HAMER(torch.nn.Module):
 
     @classmethod
     def load_from_checkpoint(cls, checkpoint_path, cfg, map_location=None, strict=None):
+        """
+        Load the checkpoint file and initialize the model with the weights.
+        Can use the original *.ckpt file or a .safetensors file
+        """
         model = cls(cfg)
 
         if checkpoint_path.endswith(".safetensors"):
-            if map_location and isinstance(map_location, torch.device):
+            if map_location is None:
+                device = "cpu"
+            elif isinstance(map_location, torch.device):
                 if not map_location.index is None:
                     device = map_location.index
                 else:
