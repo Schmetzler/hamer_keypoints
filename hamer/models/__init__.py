@@ -27,7 +27,7 @@ def download_models(folder=CACHE_DIR_HAMER):
                 print("Extracting file: " + file_name)
                 os.system("tar -xvf " + output_path)
 
-DEFAULT_CHECKPOINT=f'{CACHE_DIR_HAMER}/hamer_ckpts/checkpoints/hamer.ckpt'
+DEFAULT_CHECKPOINT=f'{CACHE_DIR_HAMER}/hamer_ckpts/checkpoints/hamer.safetensors'
 def load_hamer(checkpoint_path=DEFAULT_CHECKPOINT, strict=False, map_location=None):
 
     model_cfg = str(Path(checkpoint_path).parent.parent / 'model_config.yaml')

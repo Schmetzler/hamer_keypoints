@@ -11,8 +11,8 @@ def expand_pose_bbox(x,y, w, h, factor=2.5):
 
     return [max(min(x),0)*w, max(min(y),0)*h, min(max(x),1)*w, min(max(y),1)*h]
 
-def check_box(x,y):
-    return max(x) <= 1 and max(y) <= 1 and min(x) >= 0 and max(x) >= 0
+def check_box(x,y, pres):
+    return max(x) <= 1 and max(y) <= 1 and min(x) >= 0 and max(x) >= 0 and min(pres) > 0.8
 
 class HandDetector():
     def __init__(self, taskfiles, mode="IMAGE"):
@@ -76,18 +76,20 @@ class HandDetector():
                 else:
                     self.result = detector.detect(mp_image)
 
-                x_r, x_l, y_r, y_l = [], [], [], []
+                x_r, x_l, y_r, y_l, pres_r, pres_l = [], [], [], [], [], []
                 for i, landmark in enumerate(self.result.pose_landmarks[0]):
                     if i in [16,18,20,22]:
                         x_r.append(landmark.x)
                         y_r.append(landmark.y)
+                        pres_r.append(landmark.presence)
                     if i in [15,17,19,21]:
                         x_l.append(landmark.x)
                         y_l.append(landmark.y)
+                        pres_l.append(landmark.presence)
 
-                if not "Right" in bboxes and check_box(x_r,y_r):
+                if not "Right" in bboxes and check_box(x_r,y_r, pres_r):
                     bboxes["Right"] = expand_pose_bbox(x_r, y_r, w, h)
-                if not "Left" in bboxes and check_box(x_l, y_l):
+                if not "Left" in bboxes and check_box(x_l, y_l, pres_l):
                     bboxes["Left"] = expand_pose_bbox(x_l, y_l, w, h)
 
         return bboxes
