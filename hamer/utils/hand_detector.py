@@ -37,7 +37,7 @@ class HandDetector():
                 running_mode=mode
             )
             self.detectors["pose"] = mp.tasks.vision.PoseLandmarker.create_from_options(options)
-        self.result = None
+        self.result = {"pose":None, "hand":None}
         self.__frameNr = 1
 
     def detect_bboxes(self, cv_img):
@@ -51,16 +51,16 @@ class HandDetector():
         if "hand" in self.detectors:
             detector = self.detectors["hand"]
             if self.__mode == "VIDEO":
-                self.result = detector.detect_for_video(mp_image, self.__frameNr)
+                self.result["hand"] = detector.detect_for_video(mp_image, self.__frameNr)
             else:
-                self.result = detector.detect(mp_image)
+                self.result["hand"] = detector.detect(mp_image)
 
-            for i, elem in enumerate(self.result.handedness):
+            for i, elem in enumerate(self.result["hand"].handedness):
                 name = elem[0].category_name
                 score = elem[0].score
 
                 x, y, z = [],[],[]
-                for landmark in self.result.hand_landmarks[i]:
+                for landmark in self.result["hand"].hand_landmarks[i]:
                     x.append(landmark.x)
                     y.append(landmark.y)
                     z.append(landmark.z)
@@ -72,24 +72,25 @@ class HandDetector():
             if "pose" in self.detectors:
                 detector = self.detectors["pose"]
                 if self.__mode == "VIDEO":
-                    self.result = detector.detect_for_video(mp_image, self.__frameNr)
+                    self.result["pose"] = detector.detect_for_video(mp_image, self.__frameNr)
                 else:
-                    self.result = detector.detect(mp_image)
+                    self.result["pose"] = detector.detect(mp_image)
 
                 x_r, x_l, y_r, y_l, pres_r, pres_l = [], [], [], [], [], []
-                for i, landmark in enumerate(self.result.pose_landmarks[0]):
-                    if i in [16,18,20,22]:
-                        x_r.append(landmark.x)
-                        y_r.append(landmark.y)
-                        pres_r.append(landmark.presence)
-                    if i in [15,17,19,21]:
-                        x_l.append(landmark.x)
-                        y_l.append(landmark.y)
-                        pres_l.append(landmark.presence)
+                
+                if len(self.result["pose"].pose_landmarks) > 0:
+                    for i, landmark in enumerate(self.result["pose"].pose_landmarks[0]):
+                        if i in [16,18,20,22]:
+                            x_r.append(landmark.x)
+                            y_r.append(landmark.y)
+                            pres_r.append(landmark.presence)
+                        if i in [15,17,19,21]:
+                            x_l.append(landmark.x)
+                            y_l.append(landmark.y)
+                            pres_l.append(landmark.presence)
 
-                if not "Right" in bboxes and check_box(x_r,y_r, pres_r):
-                    bboxes["Right"] = expand_pose_bbox(x_r, y_r, w, h)
-                if not "Left" in bboxes and check_box(x_l, y_l, pres_l):
-                    bboxes["Left"] = expand_pose_bbox(x_l, y_l, w, h)
-
+                    if not "Right" in bboxes and check_box(x_r,y_r, pres_r):
+                        bboxes["Right"] = expand_pose_bbox(x_r, y_r, w, h)
+                    if not "Left" in bboxes and check_box(x_l, y_l, pres_l):
+                        bboxes["Left"] = expand_pose_bbox(x_l, y_l, w, h)
         return bboxes
