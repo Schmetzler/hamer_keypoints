@@ -1,5 +1,6 @@
 import mediapipe as mp
 import cv2
+import numpy as np
 
 def expand_pose_bbox(x,y, w, h, factor=2.5):
     x0 = x[0]
@@ -37,10 +38,11 @@ class HandDetector():
                 running_mode=mode
             )
             self.detectors["pose"] = mp.tasks.vision.PoseLandmarker.create_from_options(options)
-        self.result = {"pose":None, "hand":None}
         self.__frameNr = 1
 
     def detect_bboxes(self, cv_img):
+        self.result = {}
+
         cv_img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
         h, w = cv_img.shape[:2]
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=cv_img)
@@ -65,6 +67,7 @@ class HandDetector():
                     y.append(landmark.y)
                     z.append(landmark.z)
 
+                self.result.setdefault("mp_kpts",{})[name] = np.stack([x,y,z], axis=-1)
                 bbox = [min(x)*w, min(y)*h, max(x)*w, max(y)*h]
                 bboxes[name] = bbox
 

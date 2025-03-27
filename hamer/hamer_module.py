@@ -26,31 +26,42 @@ class HAMER():
         self.device = torch.device(device)
         self.hamer, self.model_cfg = load_hamer(chkpt_path, map_location=self.device)
         self.hamer.eval()
-        
-        self.hand_det = HandDetector(taskfiles=task_paths, mode=mode)
-        self.result = None
-        self.__frameNr = 0
-        
-    def process(self, cv_img, rescale_factor=2.0, bbox_only=False):
-        bboxes = []
-        is_right = []
-        
-        _bboxes = self.hand_det.detect_bboxes(cv_img)
-        
-        if bbox_only:
-            return {}, _bboxes
 
+        self.hand_det = HandDetector(taskfiles=task_paths, mode=mode)
+        self.result = {}
+        
+    def process_with_mediapipe(self, cv_img, rescale_factor=2.0, bbox_only=False):      
+        bboxes = self.hand_det.detect_bboxes(cv_img)
+        
+        if "mp_kpts" in self.hand_det.result:
+            self.result["mp_kpts"] = self.hand_det.result["mp_kpts"]
+        else:
+            self.result = {}
+
+        if bbox_only:
+            return {}, bboxes
+
+        return self.process(cv_img, bboxes, rescale_factor)
+
+    def process(self, cv_img, bboxes, rescale_factor=2.0):
+        """
+        bboxes must be a dictionary and looks as follows:
+        { "Right" : bbox_xyxy, "Left" : bbox_xyxy }
+        """
+        _bboxes = []
+        _is_right = []
         # Use hands based on hand keypoint detections
-        for name, bbox in _bboxes.items():
+        for name, bbox in bboxes.items():
             if len(bbox) > 0:
-                bboxes.append(bbox)
-                is_right.append(1 if name == "Right" else 0)
+                _bboxes.append(bbox)
+                _is_right.append(1 if name == "Right" else 0)
             
-        if len(bboxes) == 0:
+        if len(_bboxes) == 0:
+            self.result = {}
             return {}, {}
         
-        boxes = np.stack(bboxes)
-        right = np.stack(is_right)
+        boxes = np.stack(_bboxes)
+        right = np.stack(_is_right)
 
         # Run reconstruction on all detected hands
         dataset = ViTDetDataset(self.model_cfg, cv_img, boxes, right, rescale_factor=rescale_factor)
@@ -68,5 +79,5 @@ class HAMER():
                     result["Right"] = kp3d
                 else:
                     result["Left"] = kp3d
-            self.result = out
-        return result, _bboxes
+            self.result.update(recursive_to(out, "cpu"))
+        return result, bboxes

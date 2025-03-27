@@ -21,15 +21,18 @@ img = cv2.imread("img.png")
 
 # keypoints and bboxes are dictionaries with keys "Right" and "Left" if present
 # the image should be in OpenCVs BGR color format
-keypoints, bboxes = hamer.process(img)
+keypoints, bboxes = hamer.process_with_mediapipe(img)
 
 # you can also use the other outputs of the hamer algorithm, they are stored in the class object
 res = hamer.result
+# when processing with mediapipe the mediapipe keypoints are stored in hamer.result["mp_kpts"]
 # look at the code of hamer/models/hamer.py --> forward_step to check the possible dictionary keys
+
 ```
 
 ### Some notes about usage
 
+* If you want to use another hand bbox detector you can do so and just call `process` with the calculated bboxes in the format `{"Right": bbox_xyxy, "Left": bbox_xyxy}`
 * I added both the hand_landmarker and the pose_landmarker for bounding box detection. If the hand_landmarker cannot find a hand it falls back to the pose_landmarker. You can adjust this and use only one of the tasks
 * I also added a bounding box only mode... maybe useful for testing purposes
 
@@ -40,7 +43,7 @@ hamer = HAMER(task_paths={"hand": hand_path})
 # to use only pose_landmarker
 hamer = HAMER(task_paths={"pose": pose_path})
 # to use the bounding box only mode
-_, bboxes = hamer.process(img, bbox_only=True)
+_, bboxes = hamer.process_with_mediapipe(img, bbox_only=True)
 ```
 
 ### Issues
