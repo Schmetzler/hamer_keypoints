@@ -72,6 +72,10 @@ class HAMER():
             batch = recursive_to(batch, self.device)
             with torch.no_grad():
                 out = self.hamer(batch)
+
+            del batch["img"]
+            del batch["personid"]
+            out["input"] = batch
                 
             for i, right in enumerate(batch["right"].cpu().detach()):
                 kp3d = np.array(out["pred_keypoints_3d"].cpu().detach()[i])
