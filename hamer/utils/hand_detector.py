@@ -2,7 +2,7 @@ import mediapipe as mp
 import cv2
 import numpy as np
 
-def expand_pose_bbox(x,y, w, h, factor=2.5):
+def expand_pose_bbox(x, y, factor=2.5):
     x0 = x[0]
     y0 = y[0]
 
@@ -10,7 +10,7 @@ def expand_pose_bbox(x,y, w, h, factor=2.5):
         x[i] = x0 + (x[i] - x0) * factor
         y[i] = y0 + (y[i] - y0) * factor
 
-    return [max(min(x),0)*w, max(min(y),0)*h, min(max(x),1)*w, min(max(y),1)*h]
+    return [max(min(x),0), max(min(y),0), min(max(x),1), min(max(y),1)]
 
 def check_box(x,y, pres):
     return max(x) <= 1 and max(y) <= 1 and min(x) >= 0 and max(x) >= 0 and min(pres) > 0.8
@@ -44,7 +44,6 @@ class HandDetector():
         self.result = {}
 
         cv_img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        h, w = cv_img.shape[:2]
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=cv_img)
 
         bboxes = {}
@@ -68,7 +67,7 @@ class HandDetector():
                     z.append(landmark.z)
 
                 self.result.setdefault("mp_kpts",{})[name] = np.stack([x,y,z], axis=-1)
-                bbox = [min(x)*w, min(y)*h, max(x)*w, max(y)*h]
+                bbox = [min(x), min(y), max(x), max(y)]
                 bboxes[name] = bbox
 
         if not "Right" in bboxes or not "Left" in bboxes:
@@ -93,7 +92,7 @@ class HandDetector():
                             pres_l.append(landmark.presence)
 
                     if not "Right" in bboxes and check_box(x_r,y_r, pres_r):
-                        bboxes["Right"] = expand_pose_bbox(x_r, y_r, w, h)
+                        bboxes["Right"] = expand_pose_bbox(x_r, y_r)
                     if not "Left" in bboxes and check_box(x_l, y_l, pres_l):
-                        bboxes["Left"] = expand_pose_bbox(x_l, y_l, w, h)
+                        bboxes["Left"] = expand_pose_bbox(x_l, y_l)
         return bboxes
