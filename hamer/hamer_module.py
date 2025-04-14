@@ -26,22 +26,23 @@ class HAMER():
         """
         Init the HAMER module. If lazy is True the hamer checkpoint isn't loaded until first use.
         This way you can utilize this class in a mediapipe only mode without loading the hamer checkpoint.
-        (Beware in mediapipe only mode you must call process_with_mediapipe)
+        (Beware in mediapipe only mode you must call process_with_mediapipe with bbox_only=True)
         """
         self.device = torch.device(device)
         self.hamer = None
         self.chkpt_path = chkpt_path
         self._mp_only = False
-        if not Path(self.chkpt_path).exists():
-            print(f"Checkpoint {chkpt_path} does not exist. Fallback to Mediapipe only mode. Running process will result in an error.")
-            self._mp_only = True
-
-        if not lazy and not self._mp_only:
-            self.hamer, self.model_cfg = load_hamer(self.chkpt_path, map_location=self.device)
-            self.hamer.eval()
-
         self.hand_det = HandDetector(taskfiles=task_paths, mode=mode)
         self.result = {}
+
+        if not lazy and not self._mp_only:
+            try:
+                self.hamer, self.model_cfg = load_hamer(self.chkpt_path, map_location=self.device)
+                self.hamer.eval()
+            except Exception as e:
+                print(f"Exception occured: {repr(e)}. Fallback to Mediapipe only mode. Running process will result in an error.")
+                self._mp_only = True
+
         
     def process_with_mediapipe(self, cv_img, rescale_factor=2.0, bbox_only=False):      
         bboxes = self.hand_det.detect_bboxes(cv_img)
