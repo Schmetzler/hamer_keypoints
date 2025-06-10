@@ -20,5 +20,6 @@ setup(
         'chumpy @ git+https://github.com/nico-von-huene/chumpy.git',
         'einops',
         'safetensors',
+        'onnx<1.18.0',
     ],
 )

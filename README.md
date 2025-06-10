@@ -46,6 +46,22 @@ hamer = HAMER(task_paths={"pose": pose_path})
 _, bboxes = hamer.process_with_mediapipe(img, bbox_only=True)
 ```
 
+### Export as ONNX model
+
+To make inference easier I implemented the possibility to export it as an ONNX model. Just set a filepath to `export_onnx` in the HAMER constructor and it will export to an onnx model when process is run the first time with actual data. Be aware this is only for the hamer part not the mediapipe bounding box stuff.
+
+```python
+from hamer.hamer_module import HAMER
+hamer = HAMER(export_onnx="<FILEPATH>")
+hamer.process_with_mediapipe(img) # this will export to onnx model
+```
+
+#### Further Notes
+
+This will create many files for the model, so I recommend using an empty folder containing the model. Afterwards one can use [onnx_shrink_ray](https://github.com/usefulsensors/onnx_shrink_ray.git) to shrink the model to a usable size (and also only one file) (I also recommend using the float32 model instead of 8 bit model as the shrinking does the job well).
+
+For inference with the onnx model I think I will create a new project to remove some clutter. (Especially the whole config, models, components, heads, backbones whatsoever... which is not really needed for inference (if it is saved in a single graph)).
+
 ### Issues
 
 I had an issue importing the `hamer_module` under special unknown circumstances. The error said something about unsafe globals. I found a solution which allowed me to import this module:

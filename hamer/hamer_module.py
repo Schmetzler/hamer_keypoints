@@ -1,5 +1,6 @@
 from pathlib import Path
 import torch
+import torch.onnx
 import argparse
 import os
 import cv2
@@ -22,11 +23,13 @@ hand_path = file_manager.enter_context(as_file(ref_hand)).as_posix()
 pose_path = file_manager.enter_context(as_file(ref_pose)).as_posix()
 
 class HAMER():
-    def __init__(self, mode="IMAGE", device="cpu", chkpt_path=DEFAULT_CHECKPOINT, task_paths={"hand": hand_path, "pose": pose_path}, lazy=False):
+    def __init__(self, mode="IMAGE", device="cpu", chkpt_path=DEFAULT_CHECKPOINT, task_paths={"hand": hand_path, "pose": pose_path}, lazy=False, export_onnx=None):
         """
         Init the HAMER module. If lazy is True the hamer checkpoint isn't loaded until first use.
         This way you can utilize this class in a mediapipe only mode without loading the hamer checkpoint.
         (Beware in mediapipe only mode you must call process_with_mediapipe with bbox_only=True)
+        
+        Set "export_onnx" to a filepath to export hamer model to an onnx model
         """
         self.device = torch.device(device)
         self.hamer = None
@@ -34,6 +37,7 @@ class HAMER():
         self._mp_only = False
         self.hand_det = HandDetector(taskfiles=task_paths, mode=mode)
         self.result = {}
+        self.export_onnx = export_onnx
 
         if not lazy and not self._mp_only:
             try:
@@ -92,7 +96,21 @@ class HAMER():
         for batch in dataloader:
             batch = recursive_to(batch, self.device)
             with torch.no_grad():
-                out = self.hamer(batch)
+                b = batch["img"]
+                out = self.hamer(b)
+                if self.export_onnx:
+                    dynamic_axis = dict.fromkeys(list(out.keys()), {0: "batch_size"})
+                    dynamic_axis["input"] = {0: "batch_size"}
+                    torch.onnx.export(
+                        self.hamer, # the model
+                        b, # the example tensor
+                        self.export_onnx, # the path to export to
+                        input_names=['input'], # name for inputs
+                        output_names=list(out.keys()), # name for outputs
+                        dynamic_axes=dynamic_axis # make batch size dynamic
+                    )
+                    print(f"Exported Model to {self.export_onnx}")
+                    self.export_onnx = False
 
             del batch["img"]
             del batch["personid"]

@@ -42,7 +42,7 @@ class HAMER(torch.nn.Module):
         all_params += list(self.backbone.parameters())
         return all_params
 
-    def forward(self, batch: Dict) -> Dict:
+    def forward(self, x) -> Dict:
         """
         Run a forward step of the network
         Args:
@@ -53,7 +53,6 @@ class HAMER(torch.nn.Module):
         """
 
         # Use RGB image as input
-        x = batch['img']
         batch_size = x.shape[0]
 
         # Compute conditioning features using the backbone
@@ -65,7 +64,11 @@ class HAMER(torch.nn.Module):
         # Store useful regression outputs to the output dict
         output = {}
         output['pred_cam'] = pred_cam
-        output['pred_mano_params'] = {k: v.clone() for k,v in pred_mano_params.items()}
+        pred_mano = dict(zip(
+            [f"pred_mano_{k}" for k in pred_mano_params.keys()],
+            [v.clone() for v in pred_mano_params.values()]
+        ))
+        output.update(pred_mano)
 
         # Compute camera translation
         device = pred_mano_params['hand_pose'].device
